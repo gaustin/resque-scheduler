@@ -10,7 +10,6 @@ require 'mocha'
 require 'resque'
 $LOAD_PATH.unshift File.dirname(File.expand_path(__FILE__)) + '/../lib'
 require 'resque_scheduler'
-require 'resque_scheduler/server'
 
 #
 # make sure we can run redis
@@ -58,6 +57,10 @@ def context(*args, &block)
   end
   (class << klass; self end).send(:define_method, :name) { name.gsub(/\W/,'_') }
   klass.class_eval &block
+end
+
+def redis
+  Resque.backend.store
 end
 
 class FakeCustomJobClass
