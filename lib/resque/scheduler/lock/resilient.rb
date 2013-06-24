@@ -5,7 +5,7 @@ module Resque
     module Lock
       class Resilient < Base
         def acquire!
-          Resque.redis.evalsha(
+          redis.evalsha(
             acquire_sha,
             :keys => [key],
             :argv => [value]
@@ -13,7 +13,7 @@ module Resque
         end
 
         def locked?
-          Resque.redis.evalsha(
+          redis.evalsha(
             locked_sha,
             :keys => [key],
             :argv => [value]
@@ -21,12 +21,15 @@ module Resque
         end
 
       private
+        def redis
+          Resque.backend.store
+        end
 
         def locked_sha(refresh = false)
           @locked_sha = nil if refresh
 
           @locked_sha ||= begin
-            Resque.redis.script(
+            redis.script(
               :load,
               <<-EOF
 if redis.call('GET', KEYS[1]) == ARGV[1]
@@ -49,7 +52,7 @@ EOF
           @acquire_sha = nil if refresh
 
           @acquire_sha ||= begin
-            Resque.redis.script(
+            redis.script(
               :load,
               <<-EOF
 if redis.call('SETNX', KEYS[1], ARGV[1]) == 1

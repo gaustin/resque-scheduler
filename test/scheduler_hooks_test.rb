@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/test_helper'
 
 context "scheduling jobs with hooks" do
   setup do
-    Resque.redis.flushall
+    redis.flushall
   end
 
   test "before_schedule hook that does not return false should be enqueued" do

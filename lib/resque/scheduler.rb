@@ -6,7 +6,6 @@ module Resque
 
   class Scheduler
 
-    extend Resque::Helpers
     extend Resque::SchedulerLocking
 
     class << self
@@ -105,7 +104,7 @@ module Resque
         Resque.schedule.each do |name, config|
           load_schedule_job(name, config)
         end
-        Resque.redis.del(:schedules_changed)
+        redis.del(:schedules_changed)
         procline "Schedules Loaded"
       end
 
@@ -205,7 +204,7 @@ module Resque
         args = job_config['args'] || job_config[:args]
 
         klass_name = job_config['class'] || job_config[:class]
-        klass = constantize(klass_name) rescue klass_name
+        klass = klass_name.constantize rescue klass_name
 
         params = args.is_a?(Hash) ? [args] : Array(args)
         queue = job_config['queue'] || job_config[:queue] || Resque.queue_from_class(klass)
@@ -215,7 +214,7 @@ module Resque
           # job class can not be constantized (via a requeue call from the web perhaps), fall
           # back to enqueing normally via Resque::Job.create.
           begin
-            constantize(job_klass).scheduled(queue, klass_name, *params)
+            job_klass.constantize.scheduled(queue, klass_name, *params)
           rescue NameError
             # Note that the custom job class (job_config['custom_job_class']) is the one enqueued
             Resque::Job.create(queue, job_klass, *params)
@@ -262,10 +261,10 @@ module Resque
       end
 
       def update_schedule
-        if Resque.redis.scard(:schedules_changed) > 0
+        if redis.scard(:schedules_changed) > 0
           procline "Updating schedule"
           Resque.reload_schedule!
-          while schedule_name = Resque.redis.spop(:schedules_changed)
+          while schedule_name = redis.spop(:schedules_changed)
             if Resque.schedule.keys.include?(schedule_name)
               unschedule_job(schedule_name)
               load_schedule_job(schedule_name, Resque.schedule[schedule_name])

@@ -4,7 +4,7 @@ context "Resque::Scheduler" do
 
   setup do
     Resque::Scheduler.dynamic = false
-    Resque.redis.flushall
+    redis.flushall
     Resque::Scheduler.mute = true
     Resque::Scheduler.clear_schedule!
     Resque::Scheduler.send(:class_variable_set, :@@scheduled_jobs, {})
@@ -58,8 +58,8 @@ context "Resque::Scheduler" do
     assert_equal(1, Resque::Scheduler.rufus_scheduler.all_jobs.size)
     assert Resque::Scheduler.scheduled_jobs.include?("some_ivar_job")
 
-    Resque.redis.del(:schedules)
-    Resque.redis.hset(:schedules, "some_ivar_job2", Resque.encode(
+    redis.del(:schedules)
+    redis.hset(:schedules, "some_ivar_job2", Resque.encode(
       {'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/2"}
     ))
 
@@ -144,7 +144,7 @@ context "Resque::Scheduler" do
     end
     assert !Resque::Scheduler.scheduled_jobs.keys.include?("another_ivar_job")
     assert !Resque.schedule.keys.include?("another_ivar_job")
-    assert_equal 0, Resque.redis.scard(:schedules_changed)
+    assert_equal 0, redis.scard(:schedules_changed)
   end
 
   test "update_schedule with mocks" do
@@ -180,7 +180,7 @@ context "Resque::Scheduler" do
     end
     assert !Resque::Scheduler.scheduled_jobs.keys.include?("another_ivar_job")
     assert !Resque.schedule.keys.include?("another_ivar_job")
-    assert_equal 0, Resque.redis.scard(:schedules_changed)
+    assert_equal 0, redis.scard(:schedules_changed)
   end
 
   test "schedule= sets the schedule" do
@@ -189,7 +189,7 @@ context "Resque::Scheduler" do
       'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/75"
     }}
     assert_equal({'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/75"},
-      Resque.decode(Resque.redis.hget(:schedules, "my_ivar_job")))
+      Resque.decode(redis.hget(:schedules, "my_ivar_job")))
   end
 
   test "schedule= uses job name as 'class' argument if it's missing" do
@@ -198,7 +198,7 @@ context "Resque::Scheduler" do
       'cron' => "* * * * *", 'args' => "/tmp/75"
     }}
     assert_equal({'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/75"},
-      Resque.decode(Resque.redis.hget(:schedules, "SomeIvarJob")))
+      Resque.decode(redis.hget(:schedules, "SomeIvarJob")))
     assert_equal('SomeIvarJob', Resque.schedule['SomeIvarJob']['class'])
   end
 
@@ -215,12 +215,12 @@ context "Resque::Scheduler" do
       'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/22"
     })
     assert_equal({'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/22"},
-      Resque.decode(Resque.redis.hget(:schedules, "some_ivar_job")))
-    assert Resque.redis.sismember(:schedules_changed, "some_ivar_job")
+      Resque.decode(redis.hget(:schedules, "some_ivar_job")))
+    assert redis.sismember(:schedules_changed, "some_ivar_job")
   end
 
   test "get_schedule returns a schedule" do
-    Resque.redis.hset(:schedules, "some_ivar_job2", Resque.encode(
+    redis.hset(:schedules, "some_ivar_job2", Resque.encode(
       {'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/33"}
     ))
     assert_equal({'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/33"},
@@ -228,12 +228,12 @@ context "Resque::Scheduler" do
   end
 
   test "remove_schedule removes a schedule" do
-    Resque.redis.hset(:schedules, "some_ivar_job3", Resque.encode(
+    redis.hset(:schedules, "some_ivar_job3", Resque.encode(
       {'cron' => "* * * * *", 'class' => 'SomeIvarJob', 'args' => "/tmp/44"}
     ))
     Resque.remove_schedule("some_ivar_job3")
-    assert_equal nil, Resque.redis.hget(:schedules, "some_ivar_job3")
-    assert Resque.redis.sismember(:schedules_changed, "some_ivar_job3")
+    assert_equal nil, redis.hget(:schedules, "some_ivar_job3")
+    assert redis.sismember(:schedules_changed, "some_ivar_job3")
   end
 
   test "adheres to lint" do

@@ -5,22 +5,27 @@ module Resque
     module Lock
       class Basic < Base
         def acquire!
-          if Resque.redis.setnx(key, value)
+          if redis.setnx(key, value)
             extend_lock!
             true
           end
         end
 
         def locked?
-          if Resque.redis.get(key) == value
+          if redis.get(key) == value
             extend_lock!
 
-            if Resque.redis.get(key) == value
+            if redis.get(key) == value
               return true
             end
           end
 
           false
+        end
+
+      private
+        def redis
+          Resque.backend.store
         end
       end
     end

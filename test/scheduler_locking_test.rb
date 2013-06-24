@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/test_helper'
 
 module LockTestHelper
   def lock_is_not_held(lock)
-    Resque.redis.set(lock.key, 'anothermachine:1234')
+    redis.set(lock.key, 'anothermachine:1234')
   end
 end
 
@@ -12,17 +12,17 @@ context 'Resque::SchedulerLocking' do
   end
 
   teardown do
-    Resque.redis.del(@subject.master_lock.key)
+    redis.del(@subject.master_lock.key)
   end
 
   test 'it should use the basic lock mechanism for <= Redis 2.4' do
-    Resque.redis.stubs(:info).returns('redis_version' => '2.4.16')
+    redis.stubs(:info).returns('redis_version' => '2.4.16')
 
     assert_equal @subject.master_lock.class, Resque::Scheduler::Lock::Basic
   end
 
   test 'it should use the resilient lock mechanism for > Redis 2.4' do
-    Resque.redis.stubs(:info).returns('redis_version' => '2.5.12')
+    redis.stubs(:info).returns('redis_version' => '2.5.12')
 
     assert_equal @subject.master_lock.class, Resque::Scheduler::Lock::Resilient
   end
@@ -33,7 +33,7 @@ context 'Resque::SchedulerLocking' do
   end
 
   test 'it should not be the master if the lock is held by someone else' do
-    Resque.redis.set(@subject.master_lock.key, 'somethingelse:1234')
+    redis.set(@subject.master_lock.key, 'somethingelse:1234')
     assert !@subject.is_master?, 'should not be master'
   end
 
@@ -87,7 +87,7 @@ context 'Resque::Scheduler::Lock::Basic' do
   test "the lock should receive a TTL on acquiring" do
     @lock.acquire!
 
-    assert Resque.redis.ttl(@lock.key) > 0, "lock should expire"
+    assert redis.ttl(@lock.key) > 0, "lock should expire"
   end
 
   test 'releasing should release the master lock' do
@@ -101,20 +101,20 @@ context 'Resque::Scheduler::Lock::Basic' do
 
   test 'checking the lock should increase the TTL if we hold it' do
     @lock.acquire!
-    Resque.redis.setex(@lock.key, 10, @lock.value)
+    redis.setex(@lock.key, 10, @lock.value)
 
     @lock.locked?
 
-    assert Resque.redis.ttl(@lock.key) > 10, "TTL should have been updated"
+    assert redis.ttl(@lock.key) > 10, "TTL should have been updated"
   end
 
   test 'checking the lock should not increase the TTL if we do not hold it' do
-    Resque.redis.setex(@lock.key, 10, @lock.value)
+    redis.setex(@lock.key, 10, @lock.value)
     lock_is_not_held(@lock)
 
     @lock.locked?
 
-    assert Resque.redis.ttl(@lock.key) <= 10, "TTL should not have been updated"
+    assert redis.ttl(@lock.key) <= 10, "TTL should not have been updated"
   end
 end
 
@@ -147,7 +147,7 @@ context 'Resque::Scheduler::Lock::Resilient' do
     test "the lock should receive a TTL on acquiring" do
       @lock.acquire!
 
-      assert Resque.redis.ttl(@lock.key) > 0, "lock should expire"
+      assert redis.ttl(@lock.key) > 0, "lock should expire"
     end
 
     test 'releasing should release the master lock' do
@@ -161,20 +161,20 @@ context 'Resque::Scheduler::Lock::Resilient' do
 
     test 'checking the lock should increase the TTL if we hold it' do
       @lock.acquire!
-      Resque.redis.setex(@lock.key, 10, @lock.value)
+      redis.setex(@lock.key, 10, @lock.value)
 
       @lock.locked?
 
-      assert Resque.redis.ttl(@lock.key) > 10, "TTL should have been updated"
+      assert redis.ttl(@lock.key) > 10, "TTL should have been updated"
     end
 
     test 'checking the lock should not increase the TTL if we do not hold it' do
-      Resque.redis.setex(@lock.key, 10, @lock.value)
+      redis.setex(@lock.key, 10, @lock.value)
       lock_is_not_held(@lock)
 
       @lock.locked?
 
-      assert Resque.redis.ttl(@lock.key) <= 10, "TTL should not have been updated"
+      assert redis.ttl(@lock.key) <= 10, "TTL should not have been updated"
     end
   end
 end

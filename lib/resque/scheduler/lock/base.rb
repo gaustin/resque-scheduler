@@ -28,14 +28,14 @@ module Resque
 
         # Releases the lock.
         def release!
-          Resque.redis.del(key) == 1
+          redis.del(key) == 1
         end
 
       private
 
         # Extends the lock by `timeout` seconds.
         def extend_lock!
-          Resque.redis.expire(key, timeout)
+          redis.expire(key, timeout)
         end
 
         def hostname
@@ -45,6 +45,10 @@ module Resque
 
         def process_id
           Process.pid
+        end
+
+        def redis
+          Resque.backend.store
         end
       end
     end

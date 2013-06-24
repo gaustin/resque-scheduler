@@ -71,7 +71,7 @@ context "scheduling jobs with arguments" do
       class: SomeIvarJob
     YAML
     SomeIvarJob.expects(:perform).once.with()
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker without arguments when 'args' is blank in the config" do
@@ -80,7 +80,7 @@ context "scheduling jobs with arguments" do
       args: 
     YAML
     SomeIvarJob.expects(:perform).once.with()
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with a string when the config lists a string" do
@@ -89,7 +89,7 @@ context "scheduling jobs with arguments" do
       args: string
     YAML
     SomeIvarJob.expects(:perform).once.with('string')
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with a Fixnum when the config lists an integer" do
@@ -98,7 +98,7 @@ context "scheduling jobs with arguments" do
       args: 1
     YAML
     SomeIvarJob.expects(:perform).once.with(1)
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with multiple arguments when the config lists an array" do
@@ -109,7 +109,7 @@ context "scheduling jobs with arguments" do
         - 2
     YAML
     SomeIvarJob.expects(:perform).once.with(1, 2)
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with an array when the config lists a nested array" do
@@ -120,7 +120,7 @@ context "scheduling jobs with arguments" do
           - 2
     YAML
     SomeIvarJob.expects(:perform).once.with([1, 2])
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with a hash when the config lists a hash" do
@@ -130,7 +130,7 @@ context "scheduling jobs with arguments" do
         key: value
     YAML
     SomeIvarJob.expects(:perform).once.with('key' => 'value')
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
 
   test "calls the worker with a nested hash when the config lists a nested hash" do
@@ -141,7 +141,7 @@ context "scheduling jobs with arguments" do
           second_key: value
     YAML
     SomeIvarJob.expects(:perform).once.with('first_key' => {'second_key' => 'value'})
-    Resque.reserve('ivar').perform
+    Resque::Job.reserve('ivar').perform
   end
   
   test "poll_sleep_amount defaults to 5" do
