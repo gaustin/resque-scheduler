@@ -85,4 +85,7 @@ class SomeRealClass
   def self.queue
     :some_real_queue
   end
+
+  def self.before_enqueue_example(*args); end
+  def self.after_enqueue_example(*args); end
 end
