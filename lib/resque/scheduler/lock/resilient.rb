@@ -7,7 +7,7 @@ module Resque
         def acquire!
           redis.evalsha(
             acquire_sha,
-            :keys => [key],
+            :keys => [namespaced_key],
             :argv => [value]
           ).to_i == 1
         end
@@ -15,7 +15,7 @@ module Resque
         def locked?
           redis.evalsha(
             locked_sha,
-            :keys => [key],
+            :keys => [namespaced_key],
             :argv => [value]
           ).to_i == 1
         end
@@ -23,6 +23,14 @@ module Resque
       private
         def redis
           Resque.backend.store
+        end
+
+        def namespace
+          redis.namespace
+        end
+
+        def namespaced_key
+          "#{namespace}:#{key}"
         end
 
         def locked_sha(refresh = false)
