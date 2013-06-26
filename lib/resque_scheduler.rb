@@ -299,6 +299,10 @@ module ResqueScheduler
       prepared_hash
     end
 
+    def redis
+      Resque.backend.store
+    end
+
 end
 
 Resque.extend ResqueScheduler
